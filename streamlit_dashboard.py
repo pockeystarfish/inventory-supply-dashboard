@@ -1,6 +1,7 @@
 import streamlit as st
 import pandas as pd
 import numpy as np
+import altair as alt
 
 # ==============================
 # Editable Baseline Values
@@ -27,54 +28,49 @@ st.sidebar.header("User Inputs & Scenarios")
 order_freq = st.sidebar.selectbox(
     "How often do you order?",
     ["Weekly", "Bi-weekly", "Monthly"],
-    help="Reorder frequency: weekly replenishment lowers inventory; monthly increases it."
+    help="Reorder frequency: weekly lowers inventory; monthly increases it."
 )
 budget = st.sidebar.number_input(
-    "What’s your annual budget for inventory (€)?",
-    min_value=0.0,
-    value=100000.0,
-    step=1000.0,
-    format="%.2f",
-    help="Limits total inventory spend, controlling working capital tied up in stock."
+    "Annual budget for inventory (€)?",
+    min_value=0.0, value=100000.0, step=1000.0, format="%.2f",
+    help="Caps total inventory spend, controlling working capital tied in stock."
 )
 demand_outlook = st.sidebar.selectbox(
     "Demand outlook",
     ["Pessimistic (-10%)", "Baseline (0%)", "Optimistic (+10%)"],
-    help="Market scenario: scales Revenue & COGS by ±10%."
+    help="Scales Revenue & COGS by ±10% based on market scenario."
 )
 
-# Scenario explanations
 st.subheader("What-If Scenario Descriptions")
 st.markdown(
     """
 **How often do you order?**  
 - Weekly: frequent replenishment reduces average inventory (~-10%).  
-- Bi-weekly: standard replenishment, neutral effect.  
+- Bi-weekly: neutral inventories.  
 - Monthly: less frequent replenishment increases inventory (~+10%).
 """
 )
 st.markdown(
     """
 **Annual budget for inventory:**  
-Sets the maximum amount you can invest in inventory, capping stock levels.
+Sets the maximum cash you allocate to inventory, capping stock levels.
 """
 )
 st.markdown(
     """
 **Demand outlook:**  
-- Pessimistic (-10%): conservative forecast reduces sales and COGS.  
-- Baseline (0%): neutral, no change.  
-- Optimistic (+10%): growth forecast increases sales and COGS.
+- Pessimistic (-10%): conservative forecast lowers projected sales & costs.  
+- Baseline (0%): neutral assumption.  
+- Optimistic (+10%): growth scenario raises projected sales & costs.
 """
 )
 
 # --- Apply user adjustments ---
-out_map = {"Pessimistic (-10%)": 0.9, "Baseline (0%)": 1.0, "Optimistic (+10%)": 1.1}
+out_map = {"Pessimistic (-10%)":0.9, "Baseline (0%)":1.0, "Optimistic (+10%)":1.1}
 adj_revenue = baseline['Revenue'] * out_map[demand_outlook]
 adj_cogs    = baseline['COGS']    * out_map[demand_outlook]
-
-inv_base = baseline['Inventory']
-adj_inventory = min(inv_base, budget) * {'Weekly':0.9, 'Bi-weekly':1.0, 'Monthly':1.1}[order_freq]
+inv_base    = baseline['Inventory']
+adj_inventory = min(inv_base, budget) * {'Weekly':0.9,'Bi-weekly':1.0,'Monthly':1.1}[order_freq]
 
 # --- Recompute balance-sheet items ---
 adj_ca    = baseline['Cash'] + baseline['Accounts Receivable'] + adj_inventory
@@ -104,7 +100,7 @@ adj_cr, adj_qr, adj_wcr, adj_npm = compute_ratios(
 st.header("2025 Forecast: Baseline vs Adjusted")
 metrics = [
     ("Revenue", baseline['Revenue'], adj_revenue),
-    ("COGS", baseline['COGS'], adj_cogs),
+    ("COGS",    baseline['COGS'],    adj_cogs),
     ("Inventory", baseline['Inventory'], adj_inventory),
     ("Current Assets", baseline['Current Assets'], adj_ca),
     ("Current Liabilities", baseline['Current Liabilities'], adj_cl),
@@ -115,6 +111,17 @@ metrics = [
 ]
 metrics_df = pd.DataFrame(metrics, columns=["Metric","Baseline","Adjusted"]).set_index("Metric")
 st.dataframe(metrics_df.style.format("{:.2f}"))
+
+# --- Bar Chart for Easier Comparison ---
+st.subheader("Baseline vs Adjusted Metrics Chart")
+chart_df = metrics_df.reset_index().melt('Metric', var_name='Scenario', value_name='Value')
+chart = alt.Chart(chart_df).mark_bar().encode(
+    x=alt.X('Metric:N', sort=None),
+    y='Value:Q',
+    color='Scenario:N',
+    tooltip=['Metric','Scenario','Value']
+).properties(width=700, height=400)
+st.altair_chart(chart, use_container_width=True)
 
 # --- Display Key Financial Ratios ---
 st.subheader("Key Financial Ratios")
