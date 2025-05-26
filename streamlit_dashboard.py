@@ -168,3 +168,27 @@ cogs_data = {
 }
 cogs_df = pd.DataFrame(cogs_data)
 st.table(cogs_df.style.format({'Percentage': '{:.0f} %', 'Amount (€)': '€{:,.0f}'}))
+
+# --- Assumptions & Rationale ---
+st.markdown("---")
+st.subheader("Assumptions & Rationale")
+# Quantitative Impacts
+inv_change = baseline['Inventory'] * 0.10  # 10% inventory change
+ca_pct = inv_change / baseline['Current Assets'] * 100
+wc_baseline = baseline['Current Assets'] - baseline['Current Liabilities']
+wc_pct = inv_change / wc_baseline * 100
+
+st.markdown(
+    f"**Ordering Frequency Impact (±10% Inventory):** ~€{inv_change:,.0f} change, " 
+    f"equivalent to {ca_pct:.2f}% of Current Assets and {wc_pct:.2f}% of Working Capital."
+)
+st.markdown(
+    f"**Demand Outlook Impact (±10% Revenue & COGS):** ~€{baseline['Revenue']*0.10:,.0f} change in Revenue, " 
+    f"±10% change in Net Income (~€{baseline['Net Income']*0.10:,.0f}), holding Net Profit Margin constant."
+)
+st.markdown(
+    f"**Inventory Budget Impact:** Budget cap limits inventory to user-specified max; if set to baseline level (€{baseline['Inventory']:,.0f}), no change; lower budgets reduce Working Capital by same € amount."
+)
+st.markdown(
+    "**COGS Funding Alignment:** The €7.5M funding ensures sufficient investment in cloud, tools, and services to support these adjustments at scale, maintaining performance within ±10% sensitivity ranges."
+)
