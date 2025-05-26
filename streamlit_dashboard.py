@@ -148,3 +148,23 @@ st.markdown(
 st.markdown(
     "**Net Profit Margin:**  ↑ higher profitability per € revenue; ↓ increased cost pressure."
 )
+
+# --- COGS Breakdown ---
+st.subheader("COGS Breakdown to Justify €7.5M Funding")
+cogs_data = {
+    'Category': [
+        'Cloud Infrastructure & Hosting',
+        'Data Acquisition & Licensing',
+        'Third-Party AI/ML Tools & APIs',
+        'Professional Services & Consulting',
+        'Customer Success & Support',
+        'Maintenance, Upgrades & QA',
+        'Monitoring, Security & Compliance',
+        'Support Infrastructure (DevOps/CI-CD)',
+        'Contingency Buffer'
+    ],
+    'Percentage': [20, 10, 10, 20, 10, 10, 5, 5, 10],
+    'Amount (€)': [1500000, 750000, 750000, 1500000, 750000, 750000, 375000, 375000, 750000]
+}
+cogs_df = pd.DataFrame(cogs_data)
+st.table(cogs_df.style.format({'Percentage': '{:.0f} %', 'Amount (€)': '€{:,.0f}'}))
